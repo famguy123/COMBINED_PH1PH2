@@ -44,16 +44,16 @@ st.title("📂 One-Click Sheet Generator")
 st.markdown("""
 Upload your main Excel file. This app will automatically inject:
 
-- All **2025 monthly sheets** from the internal monthly template
+- All **2026 monthly sheets** from the internal monthly template
 - The **Γενικό Αποτέλεσμα** and **Διαφορές** sheets from the summary template
 
-⚠️ The sheets **2025_ΕΣΟΔΑ** and **2025_60-69 ΕΞΟΔΑ+ΟΜ 2** in your uploaded file will be preserved and NOT overwritten.
+⚠️ The sheets **2026_ΕΣΟΔΑ** and **2026_60-69 ΕΞΟΔΑ+ΟΜ 2** in your uploaded file will be preserved and NOT overwritten.
 """)
 
 uploaded_file = st.file_uploader("📁 Upload Your Excel File", type=["xlsx"])
 
-MONTHLY_TEMPLATE = "template_phase_2_cleaned.xlsx"
-SUMMARY_TEMPLATE = "bilio_with_v3_formulas - Copy.xlsx"
+MONTHLY_TEMPLATE = "template_phase_2_cleaned_2026.xlsx"
+SUMMARY_TEMPLATE = "bilio_with_v3_formulas_2026.xlsx"
 
 if uploaded_file:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_user, tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_output:
@@ -66,10 +66,10 @@ if uploaded_file:
         summary_wb = load_workbook(SUMMARY_TEMPLATE, data_only=False)
 
         # Define sheets to exclude from deletion
-        exclude_sheets = ["2025_ΕΣΟΔΑ", "2025_60-69 ΕΞΟΔΑ+ΟΜ 2"]
+        exclude_sheets = ["2026_ΕΣΟΔΑ", "2026_60-69 ΕΞΟΔΑ+ΟΜ 2"]
 
         # Inject monthly sheets
-        monthly_sheets = [name for name in monthly_wb.sheetnames if name.startswith("2025")]
+        monthly_sheets = [name for name in monthly_wb.sheetnames if name.startswith("2026")]
         user_wb = inject_sheets(monthly_wb, user_wb, monthly_sheets, exclude_sheets=exclude_sheets)
 
         # Inject summary sheets
