@@ -39,21 +39,37 @@ def inject_sheets(template_wb, user_wb, sheet_names, exclude_sheets=None):
 
     return user_wb
 
+def detect_year(user_wb):
+    """Detect whether the uploaded file is 2025 or 2026 based on sheet names."""
+    for name in user_wb.sheetnames:
+        if name.startswith("2026_"):
+            return "2026"
+    return "2025"
+
+TEMPLATES = {
+    "2025": {
+        "monthly": "template_phase_2_cleaned.xlsx",
+        "summary": "bilio_with_v3_formulas - Copy.xlsx",
+    },
+    "2026": {
+        "monthly": "template_phase_2_cleaned_2026.xlsx",
+        "summary": "bilio_with_v3_formulas_2026.xlsx",
+    },
+}
+
 st.title("📂 One-Click Sheet Generator")
 
 st.markdown("""
-Upload your main Excel file. This app will automatically inject:
+Upload your main Excel file. This app will automatically:
 
-- All **2026 monthly sheets** from the internal monthly template
-- The **Γενικό Αποτέλεσμα** and **Διαφορές** sheets from the summary template
+- Detect whether your file is **2025** or **2026**
+- Inject the matching **monthly sheets** from the internal template
+- Inject the **Γενικό Αποτέλεσμα** and **Διαφορές** sheets from the summary template
 
-⚠️ The sheets **2026_ΕΣΟΔΑ** and **2026_60-69 ΕΞΟΔΑ+ΟΜ 2** in your uploaded file will be preserved and NOT overwritten.
+⚠️ The **ΕΣΟΔΑ** and **60-69 ΕΞΟΔΑ+ΟΜ 2** sheets in your uploaded file will be preserved and NOT overwritten.
 """)
 
 uploaded_file = st.file_uploader("📁 Upload Your Excel File", type=["xlsx"])
-
-MONTHLY_TEMPLATE = "template_phase_2_cleaned_2026.xlsx"
-SUMMARY_TEMPLATE = "bilio_with_v3_formulas_2026.xlsx"
 
 if uploaded_file:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_user, tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_output:
@@ -62,14 +78,19 @@ if uploaded_file:
         tmp_user.flush()
 
         user_wb = load_workbook(tmp_user.name)
-        monthly_wb = load_workbook(MONTHLY_TEMPLATE, data_only=False)
-        summary_wb = load_workbook(SUMMARY_TEMPLATE, data_only=False)
+
+        # Auto-detect year from uploaded file
+        year = detect_year(user_wb)
+        st.info(f"📅 Detected year: **{year}**")
+
+        monthly_wb = load_workbook(TEMPLATES[year]["monthly"], data_only=False)
+        summary_wb = load_workbook(TEMPLATES[year]["summary"], data_only=False)
 
         # Define sheets to exclude from deletion
-        exclude_sheets = ["2026_ΕΣΟΔΑ", "2026_60-69 ΕΞΟΔΑ+ΟΜ 2"]
+        exclude_sheets = [f"{year}_ΕΣΟΔΑ", f"{year}_60-69 ΕΞΟΔΑ+ΟΜ 2"]
 
         # Inject monthly sheets
-        monthly_sheets = [name for name in monthly_wb.sheetnames if name.startswith("2026")]
+        monthly_sheets = [name for name in monthly_wb.sheetnames if name.startswith(year)]
         user_wb = inject_sheets(monthly_wb, user_wb, monthly_sheets, exclude_sheets=exclude_sheets)
 
         # Inject summary sheets
@@ -79,5 +100,5 @@ if uploaded_file:
         user_wb.save(tmp_output.name)
 
         with open(tmp_output.name, "rb") as f:
-            st.success("✅ File ready with all sheets injected.")
+            st.success(f"✅ File ready with all {year} sheets injected.")
             st.download_button("📥 Download Final File", f, file_name="generated_output.xlsx")
