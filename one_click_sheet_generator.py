@@ -32,6 +32,7 @@ def inject_sheets(template_wb, user_wb, sheet_names, exclude_sheets=None):
 
         for row_idx, row_dim in source_ws.row_dimensions.items():
             new_ws.row_dimensions[row_idx].height = row_dim.height
+            new_ws.row_dimensions[row_idx].hidden = row_dim.hidden
         for col_letter, col_dim in source_ws.column_dimensions.items():
             new_ws.column_dimensions[col_letter].width = col_dim.width
         for merged_range in source_ws.merged_cells.ranges:
